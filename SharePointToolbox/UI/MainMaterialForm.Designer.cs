@@ -633,7 +633,7 @@ namespace SharePointToolbox.UI
             // 
             // listViewEsterni
             // 
-            listViewEsterni.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            listViewEsterni.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             listViewEsterni.AutoSizeTable = false;
             listViewEsterni.BackColor = Color.FromArgb(255, 255, 255);
             listViewEsterni.BorderStyle = BorderStyle.None;
@@ -751,6 +751,7 @@ namespace SharePointToolbox.UI
             // 
             // listViewInterni
             // 
+            listViewInterni.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             listViewInterni.AutoSizeTable = false;
             listViewInterni.BackColor = Color.FromArgb(255, 255, 255);
             listViewInterni.BorderStyle = BorderStyle.None;
@@ -809,18 +810,17 @@ namespace SharePointToolbox.UI
             // btnPulisciLog
             // 
             btnPulisciLog.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnPulisciLog.AutoSize = false;
             btnPulisciLog.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnPulisciLog.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
             btnPulisciLog.Depth = 0;
             btnPulisciLog.HighEmphasis = false;
             btnPulisciLog.Icon = null;
-            btnPulisciLog.Location = new Point(1340, 10);
+            btnPulisciLog.Location = new Point(1327, 12);
             btnPulisciLog.Margin = new Padding(4, 6, 4, 6);
             btnPulisciLog.MouseState = MaterialSkin.MouseState.HOVER;
             btnPulisciLog.Name = "btnPulisciLog";
             btnPulisciLog.NoAccentTextColor = Color.Empty;
-            btnPulisciLog.Size = new Size(100, 30);
+            btnPulisciLog.Size = new Size(107, 36);
             btnPulisciLog.TabIndex = 2;
             btnPulisciLog.Text = "Pulisci log";
             btnPulisciLog.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
