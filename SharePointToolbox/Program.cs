@@ -1,13 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Graph;
-using Microsoft.Kiota.Http.HttpClientLibrary;
-using Microsoft.Kiota.Authentication.Azure;
 using SharePointToolbox.Configuration;
-using SharePointToolbox.Graph;
 using SharePointToolbox.UI;
 using SharePointToolbox.Microsoft365;
+using SharePointToolbox.UI.Theming;
 
 using Serilog;
 
@@ -33,6 +30,20 @@ internal static class Program
         // Associa la sezione "SharePoint" alla classe SharePointOptions
         builder.Services.Configure<SharePointOptions>(
             builder.Configuration.GetSection("SharePoint"));
+        builder.Services.Configure<PressReviewOptions>(
+            builder.Configuration.GetSection("PressReview"));
+
+        builder.Services.Configure<BrandingOptions>(
+            builder.Configuration.GetSection("Branding"));
+
+        builder.Services.Configure<SecurityOptions>(
+            builder.Configuration.GetSection("Security"));
+
+        builder.Services.Configure<MailOptions>(
+            builder.Configuration.GetSection("Mail"));
+
+        builder.Services.Configure<ThemeOptions>(
+            builder.Configuration.GetSection("Theme"));
 
         // Configura il logging su file
         Log.Logger = new LoggerConfiguration()
@@ -43,26 +54,39 @@ internal static class Program
 
         // Registra i servizi
         builder.Services.AddSingleton<AuthenticationService>();
+        builder.Services.AddSingleton<ApplicationAuthorizationSession>();
 
         // Registra il servizio SharePoint
         builder.Services.AddSingleton<SharePointService>();
-
-        // Registra il provider che fornisce il token a Microsoft Graph
-        builder.Services.AddSingleton<GraphAccessTokenProvider>();
+        builder.Services.AddSingleton<PressReviewService>();
+        builder.Services.AddSingleton<AppThemeManager>();
 
         // Registra il form principale
         builder.Services.AddTransient<MainForm>();
-        builder.Services.AddTransient<MainMaterialForm>();
+        builder.Services.AddTransient<DocumentHubForm>();
+        builder.Services.AddTransient<PressReviewForm>();
+        builder.Services.AddTransient<StartupAuthorizationForm>();
 
         // Costruisce il contenitore Dependency Injection
-        var host = builder.Build();
+        using var host = builder.Build();
 
         ApplicationConfiguration.Initialize();
+        Application.SetDefaultFont(AppTypography.Create(AppTypography.BodySize));
 
-        // Ottiene il MainForm dal contenitore
-        var mainForm = host.Services.GetRequiredService<MainMaterialForm>();
+        try
+        {
+            using StartupAuthorizationForm authorizationGate =
+                host.Services.GetRequiredService<StartupAuthorizationForm>();
+            if (authorizationGate.ShowDialog() != DialogResult.OK)
+                return;
 
-        // Avvia l'applicazione
-        Application.Run(mainForm);
+            if (authorizationGate.ReadyForm is null)
+                return;
+            Application.Run(authorizationGate.ReadyForm);
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Net.Http.Headers;
+using SharePointToolbox.Configuration;
 
 namespace SharePointToolbox.Microsoft365;
 
@@ -22,7 +23,10 @@ public abstract class GraphClient
     /// </summary>
     protected HttpClient CreateHttpClient()
     {
-        HttpClient client = new();
+        HttpClient client = new()
+        {
+            Timeout = TimeSpan.FromSeconds(AppConstants.GraphRequestTimeoutSeconds)
+        };
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
