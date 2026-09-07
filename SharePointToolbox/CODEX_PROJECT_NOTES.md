@@ -167,6 +167,7 @@ Prima di analizzare nuovamente il progetto:
   directory interna anche per cognome.
 - Modifica di nome, richiedente, note e scadenza della condivisione.
 - Reinvio del collegamento ai partecipanti selezionati.
+- Copia negli appunti del collegamento della condivisione selezionata.
 - Notifica silente al supporto alla creazione di una nuova condivisione.
 - Le attività SharePoint mostrate nell'audit derivano dalle informazioni rapide
   disponibili per la libreria; l'integrazione lenta con le ricerche Purview è

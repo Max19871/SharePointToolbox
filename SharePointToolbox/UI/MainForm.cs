@@ -67,6 +67,7 @@ public sealed class MainForm : MaterialForm
     private readonly DashboardActionButton _removeButton = CreateButton("Rimuovi", true);
     private readonly DashboardActionButton _closeButton = CreateButton("Revoca accessi", true);
     private readonly DashboardActionButton _sendLinkButton = CreateButton("Invia link", false);
+    private readonly DashboardActionButton _copyLinkButton = CreateButton("Copia link", false);
     private readonly DashboardActionButton _expirationButton = CreateSmallButton("Scadenze");
     private readonly DashboardActionButton _auditButton = CreateSmallButton("Registro audit");
     private readonly DashboardActionButton _localLogButton = CreateSmallButton("Log");
@@ -510,8 +511,10 @@ public sealed class MainForm : MaterialForm
         _details.Size = new Size(275, 430);
         _closeButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         _sendLinkButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        _copyLinkButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         _closeButton.Click += async (_, _) => await RunOperationAsync(ClosePracticeAsync, "Revoca accessi condivisione");
         _sendLinkButton.Click += async (_, _) => await RunOperationAsync(SendPracticeLinkAsync, "Invio link condivisione");
+        _copyLinkButton.Click += async (_, _) => await RunOperationAsync(CopyPracticeLinkAsync, "Copia link condivisione");
         var actionsBand = new WorkspaceActionPanel(surface)
         {
             BackColor = surface,
@@ -521,6 +524,7 @@ public sealed class MainForm : MaterialForm
         card.Controls.Add(_details);
         card.Controls.Add(actionsBand);
         actionsBand.Controls.Add(_sendLinkButton);
+        actionsBand.Controls.Add(_copyLinkButton);
         actionsBand.Controls.Add(_closeButton);
         void LayoutDetailsCard()
         {
@@ -528,15 +532,17 @@ public sealed class MainForm : MaterialForm
                 || detailsTitle.Font.Style != FontStyle.Bold)
                 detailsTitle.Font = detailsTitleFont;
             _details.BackColor = card.BackColor;
-            int actionsHeight = DashboardButtonHeight * 2 + DashboardSpacing + 10;
+            int actionsHeight = DashboardButtonHeight * 3 + DashboardSpacing * 2 + 10;
             actionsBand.SetBounds(
                 1,
                 Math.Max(_details.Top + DashboardSpacing, card.ClientSize.Height - actionsHeight),
                 Math.Max(0, card.ClientSize.Width - 1),
                 actionsHeight);
             _sendLinkButton.Top = 5;
-            _closeButton.Top = _sendLinkButton.Bottom + DashboardSpacing;
+            _copyLinkButton.Top = _sendLinkButton.Bottom + DashboardSpacing;
+            _closeButton.Top = _copyLinkButton.Bottom + DashboardSpacing;
             _sendLinkButton.Left = DashboardPadding;
+            _copyLinkButton.Left = DashboardPadding;
             _closeButton.Left = DashboardPadding;
             _details.Size = new Size(
                 Math.Max(180, card.ClientSize.Width - DashboardPadding * 2 - 1),
@@ -1364,6 +1370,35 @@ public sealed class MainForm : MaterialForm
             this);
     }
 
+    private async Task CopyPracticeLinkAsync()
+    {
+        SharePointService.DriveItem folder = CurrentFolder();
+        if (!Uri.TryCreate(folder.WebUrl, UriKind.Absolute, out _))
+            throw new InvalidOperationException("Il collegamento della condivisione non è disponibile.");
+
+        const int attempts = 3;
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                Clipboard.SetText(folder.WebUrl, TextDataFormat.UnicodeText);
+                break;
+            }
+            catch (ExternalException) when (attempt < attempts)
+            {
+                await Task.Delay(100);
+            }
+        }
+
+        SetStatus($"Link della condivisione '{folder.Name}' copiato negli appunti.");
+        await RecordAuditAsync(
+            "Copia link condivisione",
+            "Successo",
+            "Collegamento copiato negli appunti.",
+            folder.Id,
+            folder.Name);
+    }
+
     private async Task RecordAuditAsync(
         string operation,
         string outcome,
@@ -1559,6 +1594,7 @@ public sealed class MainForm : MaterialForm
         _removeButton.Enabled = active && _participants.SelectedItems.Count > 0;
         _closeButton.Enabled = active;
         _sendLinkButton.Enabled = active;
+        _copyLinkButton.Enabled = active;
         if (!active)
         {
             _selectedPracticeId = string.Empty;
@@ -1784,6 +1820,7 @@ public sealed class MainForm : MaterialForm
         _removeButton.Icon = CreateButtonIcon("trash");
         _closeButton.Icon = CreateButtonIcon("trash");
         _sendLinkButton.Icon = CreateButtonIcon("email");
+        _copyLinkButton.Icon = CreateButtonIcon("copy-link");
         _expirationButton.Icon = CreateButtonIcon("calendar-check");
         _localLogButton.Icon = CreateButtonIcon("log");
         _auditButton.Icon = CreateButtonIcon("audit");
@@ -1795,7 +1832,7 @@ public sealed class MainForm : MaterialForm
         foreach (DashboardActionButton button in new[]
                  {
                      _createButton, _openButton, _addButton, _roleButton, _practiceButton,
-                     _removeButton, _closeButton, _sendLinkButton, _localLogButton,
+                     _removeButton, _closeButton, _sendLinkButton, _copyLinkButton, _localLogButton,
                      _expirationButton, _auditButton, _infoButton
                  })
         {
@@ -1815,9 +1852,11 @@ public sealed class MainForm : MaterialForm
         _addButton.ExtraHorizontalPadding = 10;
         _practiceButton.ExtraHorizontalPadding = 12;
         _sendLinkButton.ExtraHorizontalPadding = 10;
+        _copyLinkButton.ExtraHorizontalPadding = 10;
         _closeButton.ExtraHorizontalPadding = 12;
         _roleButton.IconVerticalOffset = -1;
         _sendLinkButton.AlignContentLeft = true;
+        _copyLinkButton.AlignContentLeft = true;
         _closeButton.AlignContentLeft = true;
     }
 
@@ -1906,6 +1945,11 @@ public sealed class MainForm : MaterialForm
                 graphics.DrawRectangle(pen, 3, 6, 18, 13);
                 graphics.DrawLine(pen, 4, 7, 12, 14);
                 graphics.DrawLine(pen, 20, 7, 12, 14);
+                break;
+            case "copy-link":
+                graphics.DrawRectangle(pen, 7, 7, 13, 13);
+                graphics.DrawLine(pen, 4, 16, 4, 4);
+                graphics.DrawLine(pen, 4, 4, 16, 4);
                 break;
             case "calendar-check":
                 graphics.DrawRectangle(pen, 4, 6, 16, 15);
